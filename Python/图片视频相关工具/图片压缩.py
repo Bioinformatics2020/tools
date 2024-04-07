@@ -31,7 +31,30 @@ def compress_image(outfile, mb=5, quality=85, k=0.9): # 通常你只需要修改
         o_size = os.path.getsize(outfile) // 1024
     return outfile
 
-# 批量压缩图片
-path = r'D:\hryt\UE4_Code\NIC\Content\Movies\VC1_Baby - 副本\\' # 待压缩图片文件夹
-for img in os.listdir(path):
-    compress_image(path + str(img),mb=1.5)
+
+# 修改图片分辨率
+def resize_image(input_image_path, output_image_path, new_width, new_height):
+    image = Image.open(input_image_path)
+    resized_image = image.resize((new_width, new_height))
+    resized_image.save(output_image_path)
+
+
+# 修改图片分辨率为多种类型
+def multiple_resize_image(input_image_path, size):
+    image_name = os.path.basename(input_image_path)
+    output_path =  os.path.dirname(input_image_path) + '\\'
+    for i in size:
+        name = output_path + image_name.split(".")[0] + str(i)+'_'+str(i) + '.' + image_name.split(".")[1]
+        resize_image(input_image_path,name,i,i)
+        print(name)
+
+
+if __name__ == "__main__":
+    # 批量压缩图片
+    # path = r'D:\hryt\UE4_Code\NIC\Content\Movies\VC1_Baby - 副本\\' # 待压缩图片文件夹
+    # for img in os.listdir(path):
+    #     compress_image(path + str(img),mb=1.5)
+
+    # 修改图片尺寸
+    # resize_image(r'D:\CarGradle\BJCarExhibition\BJMotorShow\Content\BJMotorShow\UI\Launch\app.png',r'D:\CarGradle\BJCarExhibition\BJMotorShow\Content\BJMotorShow\UI\Launch\app48_48.png',48,48)
+    multiple_resize_image(r'D:\CarGradle\BJCarExhibition\BJMotorShow\Content\BJMotorShow\UI\Launch\app.png',[36,48,72,96])
