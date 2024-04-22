@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+	<init>
+		<log text="JNIBridge_APL INIT"/>
+	</init>
+	
+	<proguardAdditions>
+		<insert>
+		</insert>
+	</proguardAdditions>
+	
+	<resourceCopies>
+		<copyFile  src = "$S(PluginDir)/../../Libs/Android/AndroidToUE4library-release.aar"  dst = "$S(BuildDir)/libs/AndroidToUE4library-release.aar" />
+	</resourceCopies>
+	
+	<gameActivityImportAdditions>
+		<insert>
+import com.kotei.androidtoue4library.BroadcastSender;
+import com.kotei.androidtoue4library.DataCallBack;
+import com.kotei.androidtoue4library.DataManager;
+import com.kotei.androidtoue4library.CarLightCtrlManager;
+		</insert>
+	</gameActivityImportAdditions>
+	<gameActivityClassAdditions>
+		<insert>
+            // ---------插入安卓通信
+        private boolean ServiceConnected = false;
+        private boolean UeBeginPlay = false;
+            
+      public void InitAndroidtoue4library() {
+      android.util.Log.i("Androidtoue4library", " InitAndroidtoue4library: ");
+      BroadcastSender.getInstance().sendAppStartBroadcast(this);
+      //UE APP 启动后，发送广播
+      DataManager.getInstance().setDataCallBack(new DataCallBack() {
+
+      @Override
+      public void sendCabinData(String s) {
+      android.util.Log.i("Androidtoue4library", " sendCabinData: "+s);
+      nativeReaponseAndroidtoue4library(
+      "{\"name\":\"CabinData\",\"data\":"+s + "}"
+      );
+      }
+
+      @Override
+      public void sendBasicData(String s) {
+      android.util.Log.i("Androidtoue4library", " sendBasicData: "+s);
+      nativeReaponseAndroidtoue4library(
+      "{\"name\":\"BasicData\",\"data\":"+s + "}"
+      );
+      }
+
+      @Override
+      public void sendNetworkRequestData(String s) {
+      android.util.Log.i("Androidtoue4library", " sendNetworkRequestData: "+s);
+      nativeReaponseAndroidtoue4library(
+      "{\"name\":\"NetworkRequestData\",\"data\":"+s + "}"
+      );
+      }
+
+      @Override
+      public void sendSoftwareData(String s) {
+      android.util.Log.i("Androidtoue4library", " sendSoftwareData: "+s);
+      nativeReaponseAndroidtoue4library(
+      "{\"name\":\"SoftwareData\",\"data\":"+s + "}"
+      );
+      }
+
+      @Override
+      public void sendNewEnergyData(String s) {
+      android.util.Log.i("Androidtoue4library", " sendNewEnergyBeanData: "+s);
+      nativeReaponseAndroidtoue4library(
+      "{\"name\":\"NewEnergyBeanData\",\"data\":"+s + "}"
+      );
+      }
+
+            @Override
+            public void sendTotalData(String s)
+            {
+            android.util.Log.i("Androidtoue4library", " sendTotalData: "+s);
+            }
+
+            @Override
+            public void sendIntelligentDrivingData(String s)
+            {
+            android.util.Log.i("Androidtoue4library", " sendIntelligentDrivingData: "+s);
+            }
+
+            @Override
+            public void onServiceConnected()
+            {
+                android.util.Log.i("Androidtoue4library", " onServiceConnected");
+                
+                ServiceConnected = true;
+                if(ServiceConnected &amp;&amp; UeBeginPlay)
+                {
+                DataManager.getInstance().requestData("0123456");
+                android.util.Log.i("Androidtoue4library", " requestData");
+                }
+            }
+
+            @Override
+            public void onServiceDisconnected()
+            {
+            android.util.Log.i("Androidtoue4library", " onServiceDisconnected");
+            }
+
+            @Override
+            public void notifyOtaStatus(int i) {
+            android.util.Log.i("Androidtoue4library", " notifyOtaStatus");
+            nativenotifyOtaStatus(i);
+            }
+
+      });
+      }
+            
+      public void SendToAndroidtoue4library(String Value) {
+      android.util.Log.i("Androidtoue4library", " SendToAndroidtoue4library: "+Value);
+      DataManager.getInstance().requestData(Value);
+      }
+            
+
+        public void BeginPlaySendToAndroid() {
+        android.util.Log.i("Androidtoue4library", " Begin"); 
+            UeBeginPlay = true;
+        if(ServiceConnected &amp;&amp; UeBeginPlay)
+        {
+            DataManager.getInstance().requestData("0123456");
+            android.util.Log.i("Androidtoue4library", " requestData");
+        }
+      }
+
+      public void LightStateEnableSendToAndroid(boolean Value) {
+      android.util.Log.i("Androidtoue4library", " LightStateEnableSendToAndroid: "+Value);
+      CarLightCtrlManager.getInstance().frontCarLightShowAnimation(Value);
+      }
+
+            public void CarLightShowPictureSendToAndroid() {
+            android.util.Log.i("Androidtoue4library", " frontCarLightShowPicture");
+            CarLightCtrlManager.getInstance().frontCarLightShowPicture();
+            }
+
+            public void startOTAActivitSendToAndroidy() {
+            android.util.Log.i("Androidtoue4library", " startOTAActivity");
+            BroadcastSender.getInstance().startOTAActivity(this);
+            }
+
+              public void startAVMActivitySendToAndroid() {
+              android.util.Log.i("Androidtoue4library", " startAVMActivit");
+              BroadcastSender.getInstance().startAVMActivity(this);
+              }
+
+      public native void nativeReaponseAndroidtoue4library(String Value);
+
+            public native void nativenotifyOtaStatus(int Value);
+            // ---------插入安卓通信end
+    </insert>
+	</gameActivityClassAdditions>
+	<buildGradleAdditions>
+		<insert>
+			repositories {
+			flatDir{ dirs '/src/main/libs/' }
+			}
+			dependencies { implementation (name: 'AndroidToUE4library-release',ext:'aar') }
+		</insert>
+	</buildGradleAdditions>
+</root>
