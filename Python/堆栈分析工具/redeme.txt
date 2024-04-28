@@ -1,0 +1,15 @@
+1.把 crash-analysis.exe,symbol.txt,nic.log三个文件放在同一目录
+2.运行crash-analysis.exe,点击分析
+3.等待程序运行完毕,程序文本框会出现堆栈信息
+
+4.nic.log文件来自目标板子的ue4日志文件,其中应该包含dump地址信息
+5.symbol.txt文件来自以下命令
+  D:
+  cd D:\hryt\NIC_UE4_Engine\HMI\UE4\Binaries\Android
+  C:\Users\Administrator\AppData\Local\Android\Sdk\ndk\21.1.6352462\toolchains\llvm\prebuilt\windows-x86_64\bin\aarch64-linux-android-objdump.exe -C -t -m ARM NIC-arm64.so > C:\Users\Administrator\Desktop\ZXTools\pythonProject\挂机分析工具\symbol.txt
+  NIC-arm64.so是UE4挂机的那个apk打包时产生的lib文件
+  objdump.exe是安卓工具
+6.以上步骤不依赖源码环境以及实机环境  
+
+
+  
