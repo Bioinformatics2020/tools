@@ -21,6 +21,10 @@ const char* FILE_NAME = "/SharedMemoryDemo";
 #endif
 constexpr int BUF_SIZE = IMAGE_SIZE * BUFFER_NUM + 2;
 
+#ifndef WINDOWS
+int main() __attribute__((optimize("O0")));
+#endif
+
 int main() {
 #ifdef WINDOWS
     // 打开已存在的文件映射对象

@@ -13,6 +13,7 @@
 #include <unistd.h>
 #endif
 
+
 using std::cout;
 using std::endl;
 //using namespace cv;
@@ -48,6 +49,9 @@ bool getImage(int index, char* & imageOut)
     return true;
 }
 
+#ifndef WINDOWS
+void loopSend(void* pBuf) __attribute__((optimize("O0")));
+#endif
 void loopSend(void* pBuf)
 {
 #ifdef WINDOWS
@@ -119,6 +123,7 @@ void loopSend(void* pBuf)
 #endif
     }
 }
+
 
 void createShareMem()
 {
