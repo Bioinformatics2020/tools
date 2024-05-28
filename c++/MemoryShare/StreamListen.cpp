@@ -1,13 +1,28 @@
-#include <windows.h>
 #include <iostream>
 #include <string>
+#include <cstring>
+
+//#define WINDOWS
+
+#ifdef WINDOWS
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 constexpr int BUFFER_NUM = 3;
 constexpr int IMAGE_SIZE = 1920 * 1080 * 3;
-constexpr wchar_t const* FILE_NAME = L"Global\\SharedMemoryDemo";
+#ifdef WINDOWS
+constexpr wchar_t const* FILE_NAME = L"Global/SharedMemoryDemo";
+#else
+const char* FILE_NAME = "/SharedMemoryDemo";
+#endif
 constexpr int BUF_SIZE = IMAGE_SIZE * BUFFER_NUM + 2;
 
 int main() {
+#ifdef WINDOWS
     // 打开已存在的文件映射对象
     HANDLE hMapFile = OpenFileMapping(
         FILE_MAP_ALL_ACCESS,  
@@ -31,36 +46,48 @@ int main() {
         CloseHandle(hMapFile);
         return 1;
     }
+#else
+    //创建和打开共享内存
+    int shm_fd = shm_open(FILE_NAME, O_CREAT | O_RDWR, 0666);
+    if (shm_fd == -1) {
+        std::cerr << "Could not create file mapping object";
+        std::strerror(errno);
+    }
+    //设置共享内存大小
+    ftruncate(shm_fd, BUF_SIZE);
+    //映射共享内存到进程地址空间
+    void* pBuf = mmap(NULL, BUF_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+#endif
 
+#ifdef WINDOWS
     //写入位置锁
-    HANDLE writeMutex = CreateMutex(NULL, FALSE, TEXT("Global\\writeMutex")); // 注意前缀"Global\"使得互斥锁跨进程可见
-    if (writeMutex == NULL) {
-        // 错误处理
-    }
-    char writeIndex = 1;
-
+    HANDLE writeMutex = CreateMutex(NULL, FALSE, TEXT("writeMutex"));
     //读取位置锁
-    HANDLE readMutex = CreateMutex(NULL, FALSE, TEXT("Global\\readMutex")); // 注意前缀"Global\"使得互斥锁跨进程可见
-    if (readMutex == NULL) {
-        // 错误处理
-    }
-    char readIndex = 0;
-    
+    HANDLE readMutex = CreateMutex(NULL, FALSE, TEXT("readMutex"));
+#endif
+
+    //缓冲区位置索引
     char* writeIndexBuf = static_cast<char*>(pBuf);
     char* readIndexBuf = static_cast<char*>(pBuf)+1;
     char* imageBuf = static_cast<char*>(pBuf) + 2;
-    
+
+    //读写位置索引
+    char writeIndex = 1;
+    char readIndex = 0;
+
     int index = 0;
     while(1)
     {
         //即将读的帧，不能等于正在写的帧
         {
             // 查看读取位置
-            if (WaitForSingleObject(writeMutex, INFINITE) != WAIT_OBJECT_0) {
-                // 错误处理
-            }
+#ifdef WINDOWS
+            WaitForSingleObject(writeMutex, INFINITE);
+#endif
             writeIndex = *writeIndexBuf;
+#ifdef WINDOWS
             ReleaseMutex(writeMutex);
+#endif
         }
         if(writeIndex == (readIndex + 1) % BUFFER_NUM)
         {
@@ -70,11 +97,13 @@ int main() {
         {
             // 设置正在读取的帧
             readIndex = (readIndex + 1) % BUFFER_NUM;
-            if (WaitForSingleObject(readMutex, INFINITE) != WAIT_OBJECT_0) {
-                // 错误处理
-            }
+#ifdef WINDOWS
+            WaitForSingleObject(readMutex, INFINITE);
+#endif
             *readIndexBuf = readIndex;
+#ifdef WINDOWS
             ReleaseMutex(readMutex);
+#endif
         }
         
         {
@@ -88,16 +117,26 @@ int main() {
             std::cout << index << "hash:" << imageHash << std::endl;
             index++;
 
+#ifdef WINDOWS
+            //延迟100毫秒
             Sleep(100);
+#else
+            //延迟1秒
+            sleep(1);
+#endif
         }
         
     }
 
+#ifdef WINDOWS
     // 解除映射视图
     UnmapViewOfFile(pBuf);
-
     // 关闭文件映射对象
     CloseHandle(hMapFile);
+#else
+    //关闭共享内存描述符
+    close(shm_fd);
+#endif
 
     return 0;
 }

@@ -1,7 +1,17 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
+
+//#define WINDOWS
+
+#ifdef WINDOWS
 #include <windows.h>
+#else
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 using std::cout;
 using std::endl;
@@ -9,7 +19,11 @@ using std::endl;
 
 constexpr int BUFFER_NUM = 3;
 constexpr int IMAGE_SIZE = 1920 * 1080 * 3;
-constexpr wchar_t const* FILE_NAME = L"Global\\SharedMemoryDemo";
+#ifdef WINDOWS
+constexpr wchar_t const* FILE_NAME = L"Global/SharedMemoryDemo";
+#else
+const char* FILE_NAME = "/SharedMemoryDemo";
+#endif
 constexpr int BUF_SIZE = IMAGE_SIZE * BUFFER_NUM + 2;
 
 
@@ -17,7 +31,7 @@ bool getImage(int index, char* & imageOut)
 {
     static char* image = new char[IMAGE_SIZE];
 
-    std::string fileName = "C:\\Users\\Administrator\\Desktop\\ZXTools\\CppProject\\VideoStream\\ImageTest\\" + std::to_string(index) + ".temp";
+    std::string fileName = "./ImageTest/" + std::to_string(index) + ".temp";
     std::ifstream imageFile(fileName, std::ios::in | std::ios::binary);
     if (!imageFile.is_open())
     {
@@ -36,37 +50,25 @@ bool getImage(int index, char* & imageOut)
 
 void loopSend(void* pBuf)
 {
+#ifdef WINDOWS
     //写入位置锁
-    HANDLE writeMutex = CreateMutex(NULL, FALSE, TEXT("Global\\writeMutex")); // 注意前缀"Global\"使得互斥锁跨进程可见
-    if (writeMutex == NULL) {
-        // 错误处理
-    }
-    char writeIndex = 1;
-
+    HANDLE writeMutex = CreateMutex(NULL, FALSE, TEXT("writeMutex"));
     //读取位置锁
-    HANDLE readMutex = CreateMutex(NULL, FALSE, TEXT("Global\\readMutex")); // 注意前缀"Global\"使得互斥锁跨进程可见
-    if (readMutex == NULL) {
-        // 错误处理
-    }
-    char readIndex = 0;
-    
+    HANDLE readMutex = CreateMutex(NULL, FALSE, TEXT("readMutex"));
+#endif
+
+    //缓冲区位置索引
     char* writeIndexBuf = static_cast<char*>(pBuf);
     char* readIndexBuf = static_cast<char*>(pBuf)+1;
     char* imageBuf = static_cast<char*>(pBuf) + 2;
 
+    //读写位置索引
+    char writeIndex = 1;
+    char readIndex = 0;
     // 初始化写入位置
-    if (WaitForSingleObject(writeMutex, INFINITE) != WAIT_OBJECT_0) {
-        // 错误处理
-    }
     *writeIndexBuf = writeIndex;
-    ReleaseMutex(writeMutex);
-
     // 初始化读取位置
-    if (WaitForSingleObject(readMutex, INFINITE) != WAIT_OBJECT_0) {
-        // 错误处理
-    }
     *readIndexBuf = readIndex;
-    ReleaseMutex(readMutex);
 
     int index = 0;
 
@@ -75,11 +77,13 @@ void loopSend(void* pBuf)
         //正在读的帧，不能等于即将写的帧
         do {
             // 查看读取位置
-            if (WaitForSingleObject(readMutex, INFINITE) != WAIT_OBJECT_0) {
-                // 错误处理
-            }
+#ifdef WINDOWS
+            WaitForSingleObject(readMutex, INFINITE);
+#endif
             readIndex = *readIndexBuf;
+#ifdef WINDOWS
             ReleaseMutex(readMutex);
+#endif
         } while (writeIndex == readIndex);
         
         
@@ -106,16 +110,19 @@ void loopSend(void* pBuf)
 
         // 当前帧写入完毕
         writeIndex = (writeIndex + 1) % BUFFER_NUM;
-        if (WaitForSingleObject(writeMutex, INFINITE) != WAIT_OBJECT_0) {
-            // 错误处理
-        }
+#ifdef WINDOWS
+        WaitForSingleObject(writeMutex, INFINITE);
+#endif
         *writeIndexBuf = writeIndex;
+#ifdef WINDOWS
         ReleaseMutex(writeMutex);
+#endif
     }
 }
 
 void createShareMem()
 {
+#ifdef WINDOWS
     // 创建或打开一个文件映射对象
     HANDLE hMapFile = CreateFileMapping(
         INVALID_HANDLE_VALUE,    // 物理文件句柄
@@ -143,16 +150,30 @@ void createShareMem()
         CloseHandle(hMapFile);
         return;
     }
-    //memset(pBuf, 0, BUF_SIZE);
+#else
+    //创建和打开共享内存
+    int shm_fd = shm_open(FILE_NAME, O_CREAT | O_RDWR, 0666);
+    if (shm_fd == -1) {
+        std::perror("Could not create file mapping object!");
+    }
+    //设置共享内存大小
+    ftruncate(shm_fd, BUF_SIZE);
+    //映射共享内存到进程地址空间
+    void *pBuf = mmap(NULL, BUF_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+#endif
 
     //循环发送数据
     loopSend(pBuf);
-    
+
+#ifdef WINDOWS
     // 解除映射视图
     UnmapViewOfFile(pBuf);
-
     // 关闭文件映射对象
     CloseHandle(hMapFile);
+#else
+    //关闭共享内存描述符
+    close(shm_fd);
+#endif
 }
 
 
