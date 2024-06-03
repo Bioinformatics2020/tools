@@ -1,4 +1,5 @@
 import cv2
+import numpy
 
 def extract_frames_to_images(video_path, output_folder):
     """
@@ -24,7 +25,7 @@ def extract_frames_to_images(video_path, output_folder):
         os.makedirs(output_folder)
     
     # 读取并保存每一帧
-    for i in range(total_frames):
+    for i in range(600):
         ret, frame = cap.read()
         if not ret:
             break
@@ -33,6 +34,7 @@ def extract_frames_to_images(video_path, output_folder):
         frame_filename = f"{i}.temp"
         frame_path = os.path.join(output_folder, frame_filename)
 
+        frame = numpy.pad(frame, pad_width=((0, 0), (0, 0), (0, 1)), mode='constant', constant_values=255)
         # 打开文件以二进制写入模式
         with open(frame_path, 'wb') as f:
             # 遍历数组，将每个元素写入文件
@@ -49,4 +51,4 @@ def extract_frames_to_images(video_path, output_folder):
 
 if __name__ == "__main__":
     # 使用函数，指定视频路径和输出文件夹
-    extract_frames_to_images(r'C:\Users\Administrator\Videos\Captures\3.mp4',r'C:\Users\Administrator\Videos\Captures\aaa\temp')
+    extract_frames_to_images(r'C:\Users\Administrator\Videos\Captures\1_out2.mp4',r'C:\Users\Administrator\Videos\Captures\1_out2')

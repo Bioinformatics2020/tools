@@ -59,4 +59,4 @@ def resize_video(input_path, output_path, new_width, new_height):
 
 if __name__ == "__main__":  
     # 使用函数，指定输入视频路径、输出视频路径以及新的宽度和高度
-    resize_video(r'C:\Users\Administrator\Videos\Captures\2.mp4', r'C:\Users\Administrator\Videos\Captures\3.mp4', 1920, 1080)
+    resize_video(r'C:\Users\Administrator\Videos\Captures\1_out.mp4', r'C:\Users\Administrator\Videos\Captures\1_out2.mp4', 1920, 1080)
