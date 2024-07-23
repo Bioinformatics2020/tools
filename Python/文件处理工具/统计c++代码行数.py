@@ -3,13 +3,11 @@ import os,time
 from threading import Thread
   
 #代码所在目录
-FILE_PATH = r'D:\UE_4.27\4.27.2-release\Engine\Source'
+FILE_PATH = r'D:\hryt\NIC_UE4_Engine\HMI\UE4\Source\NIC\UIControl\Media'
 DETAILl_LOG = False
 
 global percent
 percent = 0.0
-global star_num
-star_num = 0
 
 def analyze_code(codefile):
     '''
@@ -58,15 +56,14 @@ def progressBar():
     专门用于实时打印进度信息
     '''
     global percent
-    global star_num
     startTime = time.perf_counter()
     while(1):
         durTime = time.perf_counter() - startTime
-        # 读取全局变量，用于线程通信，这里只读，不必上锁
-        a = percent * 100
-        b = star_num * '*'
-        c = (50-star_num) * '-'
-        print("\r{:^3.0f}%[{}{}>] {:.2f}s".format(a, b, c, durTime), end = "")
+        # 读取全局变量，用于线程通信，这里只读且没有时效或准确性要求，不必上锁
+        star_num = int(percent*50)
+        star = star_num * '*'
+        line = (50-star_num) * '-'
+        print("\r{:^3.0f}%[{}{}>] {:.2f}s".format(percent * 100, star, line, durTime), end = "")
         if a == 100:
             break
         time.sleep(0.5)
@@ -91,7 +88,6 @@ def run(FILE_PATH):
 
     # 进度条线程
     global percent
-    global star_num
     t1 = Thread(target=progressBar)
     t1.start()
 
@@ -122,7 +118,7 @@ def run(FILE_PATH):
             
         # 进度条
         percent = now_folder / all_folder
-        star_num = int(percent*50)
+        
 
     t1.join()
     print()
@@ -136,3 +132,51 @@ def run(FILE_PATH):
 if __name__ == '__main__':
 
     run(FILE_PATH)
+
+
+r'''
+一部分之前的统计数据
+
+ffmpeg-6.1.1
+总文件夹个数: 98 总文件个数: 8167 被统计文件个数: 4158
+统计的文件详情 c++头文件: 1094 c++源文件: 3061 csharp文件 3
+总代码行数: 1617350
+注释行数: 178529 占11.04%
+空行数: 189945 占11.74%
+
+hryt/Source
+总文件夹个数: 246 总文件个数: 1143 被统计文件个数: 1138
+统计的文件详情 c++头文件: 583 c++源文件: 552 csharp文件 3
+总代码行数: 313571
+注释行数: 19753 占6.30%
+空行数: 27077 占8.64%
+
+hryt/Source/NIC/UI/Media
+总文件夹个数: 25 总文件个数: 280 被统计文件个数: 280
+统计的文件详情 c++头文件: 140 c++源文件: 140 csharp文件 0
+总代码行数: 36057
+注释行数: 3405 占9.44%
+空行数: 4115 占11.41%
+
+4.27.2-release/Engine/Source
+总文件夹个数: 10483 总文件个数: 86954 被统计文件个数: 60377
+统计的文件详情 c++头文件: 36491 c++源文件: 21437 csharp文件 2449
+总代码行数: 20914240
+注释行数: 3612243 占17.27%
+空行数: 2980613 占14.25%
+
+JsonParserAndDispather/Source
+总文件夹个数: 7 总文件个数: 13 被统计文件个数: 13
+统计的文件详情 c++头文件: 7 c++源文件: 5 csharp文件 1
+总代码行数: 639
+注释行数: 45 占7.04%
+空行数: 73 占11.42%
+
+JNIBridge/Source
+总文件夹个数: 4 总文件个数: 6 被统计文件个数: 5
+统计的文件详情 c++头文件: 2 c++源文件: 2 csharp文件 1
+总代码行数: 297
+注释行数: 13 占4.38%
+空行数: 38 占12.79%
+
+'''
