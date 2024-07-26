@@ -3,7 +3,7 @@ import os,time
 from threading import Thread
   
 #代码所在目录
-FILE_PATH = r'D:\hryt\NIC_UE4_Engine\HMI\UE4\Source\NIC\UIControl\Media'
+FILE_PATH = r'D:\UE_4.27\Project\HotUpdate\Plugins\HotUpdateTool\Source'
 DETAILl_LOG = False
 
 global percent
@@ -64,7 +64,7 @@ def progressBar():
         star = star_num * '*'
         line = (50-star_num) * '-'
         print("\r{:^3.0f}%[{}{}>] {:.2f}s".format(percent * 100, star, line, durTime), end = "")
-        if a == 100:
+        if percent == 1:
             break
         time.sleep(0.5)
 
