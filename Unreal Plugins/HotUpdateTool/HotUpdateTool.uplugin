@@ -19,6 +19,11 @@
 			"Name": "HotUpdateTool",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "HotUpdateEditorTool",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	]
 }

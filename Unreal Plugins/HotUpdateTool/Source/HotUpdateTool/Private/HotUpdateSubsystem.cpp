@@ -6,9 +6,6 @@
 #include "HotUpdatePrimaryData.h"
 #include "IPlatformFilePak.h"
 #include "Engine/AssetManager.h"
-#include "CoreGlobals.h"
-#include "Misc/ConfigCacheIni.h"
-#include "Misc/CoreDelegates.h"
 
 UHotUpdateSubsystem* LoadAssetSubsystem = nullptr;
 
@@ -147,7 +144,7 @@ FDateTime UHotUpdateSubsystem::LoadUpdateTime()
 
 bool UHotUpdateSubsystem::LoadPak()
 {
-	FString PakPath = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY + TEXT("/");
+	FString PakPath = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY;
 	//在指定目录下查找最新的Pak文件
 	TArray<FString> Result;
 	IFileManager::Get().FindFiles(Result, *(PakPath+"*"), true, false);
@@ -218,7 +215,7 @@ bool UHotUpdateSubsystem::UnLoadPak(const FUpdateManifest& Manifest)
 	bool bAllUnMount = true;
 	for (auto& PakFile : Manifest.PakFileInfo)
 	{
-		FString PakPathOnDisk = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY / PakFile.PakFileName;
+		FString PakPathOnDisk = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY + PakFile.PakFileName;
 		bool bUnMount = FCoreDelegates::OnUnmountPak.Execute(PakPathOnDisk);
 		if (!bUnMount)
 		{
@@ -235,7 +232,7 @@ bool UHotUpdateSubsystem::MovePak(const FUpdateManifest& Manifest, const FString
 	bool bAllMove = true;
 	for (auto& PakFile : Manifest.PakFileInfo)
 	{
-		FString PakPathOnDisk = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY / PakFile.PakFileName;
+		FString PakPathOnDisk = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY + PakFile.PakFileName;
 		bool bMove = IFileManager::Get().Move(*PakPathOnDisk,*(UpdatePakDirectory + PakFile.PakFileName));
 		if (!bMove)
 		{
@@ -251,7 +248,7 @@ bool UHotUpdateSubsystem::ReLoadPak(const FUpdateManifest& Manifest)
 	bool bAllMount = true;
 	for (auto& PakFile : Manifest.PakFileInfo)
 	{
-		FString PakPathOnDisk = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY / PakFile.PakFileName;
+		FString PakPathOnDisk = FPaths::ProjectContentDir() / HOTUPDATE_DIRECTORY + PakFile.PakFileName;
 		bool bMount = FCoreDelegates::MountPak.Execute(PakPathOnDisk, 0) != nullptr;
 		if (!bMount)
 		{

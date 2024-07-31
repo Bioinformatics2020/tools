@@ -12,10 +12,12 @@
 
 class UHotUpdatePrimaryData;
 
-#define HOTUPDATE_DIRECTORY TEXT("HotUpdate")
+//热更新的资源目录名称，位于ProjectName/Content/下
+#define HOTUPDATE_DIRECTORY TEXT("HotUpdate/")
 
-
+//资产可以加载事件回调
 DECLARE_DYNAMIC_DELEGATE_OneParam(FHotUpdateModuleLoad,UHotUpdatePrimaryData*, AssetData);
+//资产需要卸载事件回调
 DECLARE_DYNAMIC_DELEGATE(FHotUpdateModuleUnload);
 
 struct FModuleInfo

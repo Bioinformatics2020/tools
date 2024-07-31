@@ -1,11 +1,15 @@
 ﻿#pragma once
 #include "HotUpdatePrimaryData.h"
 
-struct FExportChunkInfo
+const uint64 ManifestHashSeed = 999599;//一个比较大的数作为hash种子
+
+struct HOTUPDATETOOL_API FExportChunkInfo
 {
 	int ChunkId;
 	FName ModuleName;
 	FString PakFileName;
+
+	bool operator==(const FExportChunkInfo& Other) const;
 };
 
 class HOTUPDATETOOL_API FUpdateManifest

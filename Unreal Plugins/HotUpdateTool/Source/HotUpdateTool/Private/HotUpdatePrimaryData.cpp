@@ -16,25 +16,25 @@ void UHotUpdatePrimaryData::PostEditChangeProperty(FPropertyChangedEvent& Proper
 	bool bForceRefreshChange = PropertyChangedEvent.MemberProperty->GetName() == TEXT("bForceRefresh");
 	bool OtherAssetsChange = PropertyChangedEvent.MemberProperty->GetName() == TEXT("OtherAssets");
 	bool OtherBlueprintsChange = PropertyChangedEvent.MemberProperty->GetName() == TEXT("OtherBlueprints");
-	
-	if(bForceRefreshChange)
+
+	if (bForceRefreshChange)
 	{
 		bForceRefresh = false;
 	}
-	
-	if(DirectorysChange || bForceRefreshChange)
+
+	if (DirectorysChange || bForceRefreshChange)
 	{
 		//自动根据传入路径加载路径内的所有资产
-		for(int i=0; i<Directorys.Num(); i++)
+		for (int i = 0; i < Directorys.Num(); i++)
 		{
-			auto &Asset = Directorys[i];
+			auto& Asset = Directorys[i];
 			// 处理资源路径
 			FString& Path = Asset.DirectoryName.Path;
 
 			//默认选择路径时输入的是系统全路径，这里转换为content相对路径
-			if(Path.Find(TEXT("/Game/")) < 0)
+			if (Path.Find(TEXT("/Game/")) < 0)
 			{
-				if(!FPaths::DirectoryExists(Path))
+				if (!FPaths::DirectoryExists(Path))
 				{
 					continue;
 				}
@@ -43,19 +43,20 @@ void UHotUpdatePrimaryData::PostEditChangeProperty(FPropertyChangedEvent& Proper
 			}
 
 			// 根据路径获取资源
-			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+			FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(
+				TEXT("AssetRegistry"));
 			IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
 			TArray<FAssetData> OutAssets;
 			AssetRegistry.GetAssetsByPath(FName(Path), OutAssets, true);
 			Asset.DirectoryAssets.Empty();
 			Asset.DirectoryBlueprints.Empty();
-			
+
 			// 添加到主资产列表中
-			for (int j=0; j<OutAssets.Num(); j++)
+			for (int j = 0; j < OutAssets.Num(); j++)
 			{
-				FAssetData &AssetData = OutAssets[j];
-				if(AssetData.AssetClass == TEXT("Blueprint"))
+				FAssetData& AssetData = OutAssets[j];
+				if (AssetData.AssetClass == TEXT("Blueprint"))
 				{
 					TSoftClassPtr<UObject> ObjectPtr(AssetData.ToSoftObjectPath().ToString() + TEXT("_C"));
 					Asset.DirectoryBlueprints.Add(AssetData.AssetName, ObjectPtr);
@@ -70,7 +71,7 @@ void UHotUpdatePrimaryData::PostEditChangeProperty(FPropertyChangedEvent& Proper
 	}
 
 	//全部重新注册一次
-	if(DirectorysChange || bForceRefreshChange || OtherAssetsChange || OtherBlueprintsChange)
+	if (DirectorysChange || bForceRefreshChange || OtherAssetsChange || OtherBlueprintsChange)
 	{
 		Register();
 	}
@@ -92,41 +93,44 @@ void UHotUpdatePrimaryData::Register()
 	ExplicitBlueprints.Empty();
 
 	// 目录内的资产
-	for(int i=0; i<Directorys.Num(); i++)
+	for (int i = 0; i < Directorys.Num(); i++)
 	{
-		auto &Asset = Directorys[i];
-		
+		auto& Asset = Directorys[i];
+
 		for (const auto& Pair : Asset.DirectoryAssets)
 		{
 			ExplicitAssets.Add(Pair.Value);
-			ModuleAssetIndex.Add(Pair.Key, ExplicitAssets.Num()-1);
+			ModuleAssetIndex.Add(Pair.Key, ExplicitAssets.Num() - 1);
 		}
 		for (const auto& Pair : Asset.DirectoryBlueprints)
 		{
 			ExplicitBlueprints.Add(Pair.Value);
-			ModuleBlueprintIndex.Add(Pair.Key, ExplicitBlueprints.Num()-1);
+			ModuleBlueprintIndex.Add(Pair.Key, ExplicitBlueprints.Num() - 1);
 		}
 	}
 
 	// 单独的资产
-	for(const auto& Pair : OtherAssets)
+	for (const auto& Pair : OtherAssets)
 	{
 		ExplicitAssets.Add(Pair.Value);
-		ModuleAssetIndex.Add(Pair.Key, ExplicitAssets.Num()-1);
+		ModuleAssetIndex.Add(Pair.Key, ExplicitAssets.Num() - 1);
 	}
-	for(const auto& Pair : OtherBlueprints)
+	for (const auto& Pair : OtherBlueprints)
 	{
 		ExplicitBlueprints.Add(Pair.Value);
-		ModuleBlueprintIndex.Add(Pair.Key, ExplicitBlueprints.Num()-1);
+		ModuleBlueprintIndex.Add(Pair.Key, ExplicitBlueprints.Num() - 1);
 	}
+
+	//不允许递归这种非显式的资源引用
+	Rules.bApplyRecursively = false;
 }
 
 TSoftObjectPtr<UObject> UHotUpdatePrimaryData::FindObjectFromName(FName Name)
 {
 	auto Value = ModuleAssetIndex.Find(Name);
-	if(Value)
+	if (Value)
 	{
-		if(ExplicitAssets.IsValidIndex(*Value))
+		if (ExplicitAssets.IsValidIndex(*Value))
 		{
 			return ExplicitAssets[*Value];
 		}
@@ -137,9 +141,9 @@ TSoftObjectPtr<UObject> UHotUpdatePrimaryData::FindObjectFromName(FName Name)
 TSoftClassPtr<UObject> UHotUpdatePrimaryData::FindClassFromName(FName Name)
 {
 	auto Value = ModuleBlueprintIndex.Find(Name);
-	if(Value)
+	if (Value)
 	{
-		if(ExplicitBlueprints.IsValidIndex(*Value))
+		if (ExplicitBlueprints.IsValidIndex(*Value))
 		{
 			return ExplicitBlueprints[*Value];
 		}
@@ -150,14 +154,14 @@ TSoftClassPtr<UObject> UHotUpdatePrimaryData::FindClassFromName(FName Name)
 UClass* UHotUpdatePrimaryData::LoadClassFromName(FName Name)
 {
 	TSoftClassPtr<UObject> ClassPtr = FindClassFromName(Name);
-	if(ClassPtr.IsNull())
+	if (ClassPtr.IsNull())
 	{
-		UE_LOG(LogHotUpdateTool,Warning,TEXT("类资产加载失败:%s"),*Name.ToString());
+		UE_LOG(LogHotUpdateTool, Warning, TEXT("类资产加载失败:%s"), *Name.ToString());
 	}
 	UClass* Class = ClassPtr.Get();
-	if(Class)
+	if (Class)
 	{
-		UE_LOG(LogHotUpdateTool,Warning,TEXT("类资产存在于缓存中:%s"),*Name.ToString());
+		UE_LOG(LogHotUpdateTool, Warning, TEXT("类资产存在于缓存中:%s"), *Name.ToString());
 		return Class;
 	}
 	return ClassPtr.LoadSynchronous();
