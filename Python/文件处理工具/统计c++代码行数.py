@@ -1,10 +1,16 @@
 #coding：utf-8
 import os,time
 from threading import Thread
-  
+
 #代码所在目录
-FILE_PATH = r'D:\UE_4.27\Project\HotUpdate\Plugins\HotUpdateTool\Source'
+FILE_PATH = r'D:\UE_4.27\4.27.2-release\Engine\Source\Runtime'
+#详细log，每个文件均输出统计信息
 DETAILl_LOG = False
+#统计子目录的每个文件夹内的代码
+SUB_DIR = True
+#进度条刷新时间间隔
+PROGRESSBAR_DELAYTIME = 0.1
+
 
 global percent
 percent = 0.0
@@ -63,13 +69,13 @@ def progressBar():
         star_num = int(percent*50)
         star = star_num * '*'
         line = (50-star_num) * '-'
-        print("\r{:^3.0f}%[{}{}>] {:.2f}s".format(percent * 100, star, line, durTime), end = "")
+        print("{:^3}%[{}{}>] {:.2f}s".format(int(percent * 100), star, line, durTime))
         if percent == 1:
             break
-        time.sleep(0.5)
+        time.sleep(PROGRESSBAR_DELAYTIME)
 
 
-def run(FILE_PATH):
+def stat_folder(file_path):
     #遍历文件
     now_folder = 0
     total_lines = 0
@@ -81,7 +87,7 @@ def run(FILE_PATH):
     total_cpp = 0
     total_csharp = 0
     
-    walks = list(os.walk(FILE_PATH))
+    walks = list(os.walk(file_path))
     all_folder = len(walks)
     file_num = 0
     analyze_file_num = 0
@@ -119,19 +125,39 @@ def run(FILE_PATH):
         # 进度条
         percent = now_folder / all_folder
         
-
     t1.join()
-    print()
+    
     print("总文件夹个数:",all_folder,"总文件个数:",file_num,"被统计文件个数:",analyze_file_num)
     print("统计的文件详情 c++头文件:",total_h,"c++源文件:",total_cpp,"csharp文件",total_csharp)
     print("总代码行数:",total_lines)
     print("注释行数:",total_comment_lines,"占%0.2f%%"%(total_comment_lines * 100 / total_lines))
     print("空行数:", total_blank_lines, "占%0.2f%%"% (total_blank_lines * 100 / total_lines))
     
-  
-if __name__ == '__main__':
 
-    run(FILE_PATH)
+def stat_sub_folder(file_path):
+    # 列出指定目录中的所有条目
+    entries = os.listdir(file_path)
+
+    # 遍历条目，检查是否为目录
+    for entry in entries:
+        full_path = os.path.join(file_path, entry)
+        if os.path.isdir(full_path):
+            print()
+            print(full_path)
+            stat_folder(full_path)
+
+
+def run():
+    if SUB_DIR:
+        stat_sub_folder(FILE_PATH)
+    else:
+        stat_folder(FILE_PATH)
+
+if __name__ == '__main__':
+    run()
+    
+    
+    
 
 
 r'''
