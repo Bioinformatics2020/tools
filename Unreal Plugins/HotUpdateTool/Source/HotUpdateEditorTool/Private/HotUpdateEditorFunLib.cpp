@@ -56,7 +56,7 @@ void UHotUpdateEditorFunLib::CreateUpdatePak(const TArray<FExportChunkInfo>& Chu
 	}
 
 	//拷贝需要导出的文件
-	for(auto& PakFile:UpdateManifest.PakFileInfo)
+	for(const auto& PakFile:UpdateManifest.PakFileInfo)
 	{
 		IFileManager::Get().Copy(*(UpdatePakDirectory + PakFile.PakFileName),*(PakDirectoryName + PakFile.PakFileName));
 	}
@@ -147,7 +147,7 @@ void UHotUpdateEditorFunLib::CreateBasePak(const FString& PackageDirectory, cons
 	//删除目录原有的数据，避免版本号相同，但是Chunk变更的情况下形成干扰
 	IFileManager::Get().DeleteDirectory(*(TargetDirectory),false,true);
 	//移动需要导出的文件
-	for(auto& PakFile:NeedMoveFiles)
+	for(const auto& PakFile:NeedMoveFiles)
 	{
 		IFileManager::Get().Move(*(TargetDirectory + PakFile),*(PakDirectoryName + PakFile));
 	}
@@ -250,13 +250,13 @@ TArray<FString> UHotUpdateEditorFunLib::FindPakInBasePackage(const FString& Base
 	}
 
 	//查找子模块
-	TArray<FString> BasePak2;
-	IFileManager::Get().FindFiles(BasePak2, *(HotUpdatePak+"*"), true, false);
-	for (auto& Pak : BasePak2)
+	TArray<FString> BasePakChild;
+	IFileManager::Get().FindFiles(BasePakChild, *(HotUpdatePak+"*"), true, false);
+	for (auto& Pak : BasePakChild)
 	{
 		Pak = HotUpdatePak + Pak;
 	}
-	BasePak.Append(BasePak2);
+	BasePak.Append(BasePakChild);
 	return BasePak;
 }
 
@@ -289,7 +289,11 @@ TArray<UHotUpdatePrimaryData*> UHotUpdateEditorFunLib::GetAllHotUpdatePrimaryDat
 	for(const FAssetData& AssetData : Assets)
 	{
 		UHotUpdatePrimaryData* AssetPtr = TSoftObjectPtr<UHotUpdatePrimaryData>(AssetData.ObjectPath.ToString()).LoadSynchronous();
-		checkf(AssetPtr, TEXT("主资产加载失败"));
+	    if(!AssetPtr)
+	    {
+	        UE_LOG(LogHotUpdateEditorTool, Error,TEXT("主资产加载失败"));
+	        break;
+	    }
 		if(AssetPtr->ModuleName != TEXT("Root"))
 		{
 			HotUpdatePrimaryData.Add(AssetPtr);
@@ -311,7 +315,11 @@ UHotUpdatePrimaryData* UHotUpdateEditorFunLib::GetRootHotUpdatePrimaryData()
 	for(const FAssetData& AssetData : Assets)
 	{
 		UHotUpdatePrimaryData* AssetPtr = TSoftObjectPtr<UHotUpdatePrimaryData>(AssetData.ObjectPath.ToString()).LoadSynchronous();
-		checkf(AssetPtr, TEXT("主资产加载失败"));
+	    if(!AssetPtr)
+	    {
+	        UE_LOG(LogHotUpdateEditorTool, Error,TEXT("主资产加载失败"));
+	        return nullptr;
+	    }
 		if(AssetPtr->ModuleName == TEXT("Root"))
 		{
 			return AssetPtr;

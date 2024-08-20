@@ -95,7 +95,7 @@ void UHotUpdatePrimaryData::Register()
 	// 目录内的资产
 	for (int i = 0; i < Directorys.Num(); i++)
 	{
-		auto& Asset = Directorys[i];
+		const auto& Asset = Directorys[i];
 
 		for (const auto& Pair : Asset.DirectoryAssets)
 		{

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FHotUpdateState.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UObject/Object.h"
 #include "UObject/StrongObjectPtr.h"
@@ -14,6 +15,9 @@ class UHotUpdatePrimaryData;
 
 //热更新的资源目录名称，位于ProjectName/Content/下
 #define HOTUPDATE_DIRECTORY TEXT("HotUpdate/")
+
+//编辑器模式下运行调试时屏蔽热更新相关代码，可手动关闭此功能便于代码高亮、阅读与跳转
+#define HOTUPDATE_NOTCODEREVIEW 1
 
 //资产可以加载事件回调
 DECLARE_DYNAMIC_DELEGATE_OneParam(FHotUpdateModuleLoad,UHotUpdatePrimaryData*, AssetData);
@@ -27,13 +31,14 @@ struct FModuleInfo
 	FPrimaryAssetId ModuleId;
 	FName SuperModuleName;
 	//当前模块的主资产文件
-	UHotUpdatePrimaryData* PrimaryData;
+	TStrongObjectPtr<UHotUpdatePrimaryData> PrimaryData;
 
 	
 	//记录模块的加载状态
 	enum EModuleState
 	{
 		Loaded,//主资产已加载
+		Loading,//加载中
 		Finded//仅引用到模块，但主资产未加载
 	}ModuleState;
 
@@ -68,11 +73,16 @@ public:
 	// 加载模块主资产
 	UFUNCTION(BlueprintCallable)
 	void LoadModule(FName ModuleName, FHotUpdateModuleLoad OnModuleLoad, FHotUpdateModuleUnload OnModuleUnload);
-	
+
+	//卸载模块主资产，同时自动卸载该模块所有子模块
 	UFUNCTION(BlueprintCallable)
 	void UnLoadModule(FName ModuleName);
 	
 private:
+	//递归卸载模块以及对应的子模块
+	void RecursionUnLoadModule(FName ModuleName, int Level);
+
+	//运行时某个Module加载完成之后，需要将当前模块以及对应的子模块加载到热更新系统中，便于子模块的查找
 	void RegisterModule(const FModuleInfo& Module);
 	
 	//主资产根节点
@@ -80,6 +90,12 @@ private:
 
 	//模块的详细信息
 	TMap<FName,FModuleInfo> AllModuleInfo;
+
+#if WITH_EDITOR && HOTUPDATE_NOTCODEREVIEW
+	// 这个数据只在编辑器模式下，用于调试LoadModule
+	TMap<FName,UHotUpdatePrimaryData*> EditorAllPrimaryData;
+	TMap<FName,FHotUpdateModuleUnload> EditorPrimaryDataUnLoad;
+#endif
 
 	
 	//------Pak包更新管理-------
@@ -93,7 +109,10 @@ public:
 	
 private:
 	//在特定的目录下加载Pak文件
-	bool LoadPak();
+	bool LoadSavedPak();
+
+	//检查Pak是否存在
+	bool CheckPak(const FUpdateManifest& Manifest, const FString& UpdatePakDirectory);
 
 	//根据Manifest配置卸载需要更新的Pak文件
 	bool UnLoadPak(const FUpdateManifest& Manifest);
@@ -103,6 +122,15 @@ private:
 
 	//根据Manifest重新触发Pak加载操作
 	bool ReLoadPak(const FUpdateManifest& Manifest);
+
+	void SetUpdateError();
+
+	//记录热更新状态
+	FHotUpdateState UpdateState;
+	
+	//在热更新过程中需要保存的变量
+	FUpdateManifest UpdateManifest;
+	bool UpdateError = false;
 
 	
 	//------模块更新管理-------

@@ -44,7 +44,7 @@ void UEdGraph_ChunkReference::RecursivelyGatherSizes(FPrimaryAssetId Identifier,
 	UHotUpdatePrimaryData* ChildPrimaryData = Manager->GetPrimaryAssetObject<UHotUpdatePrimaryData>(Identifier);
 	if (!ChildPrimaryData)
 	{
-		checkf(false, TEXT("未找到资产:%s"), *Identifier.PrimaryAssetName.ToString());
+		UE_LOG(LogHotUpdateEditorTool, Error, TEXT("未找到资产:%s"), *Identifier.PrimaryAssetName.ToString());
 		return;
 	}
 

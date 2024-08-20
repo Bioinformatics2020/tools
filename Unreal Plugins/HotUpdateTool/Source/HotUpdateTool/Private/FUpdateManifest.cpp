@@ -24,7 +24,8 @@ void FUpdateManifest::SaveToLocal(const FString& UpdatePakDirectory)
 	}
 	const uint64 Hash = CityHash64WithSeed((char*)*AllData, AllData.Len() * sizeof(TCHAR), ManifestHashSeed);
 
-	FFileHelper::SaveStringToFile(AllData, *(UpdatePakDirectory + TEXT("UpdateManifest.txt")));
+	//UE默认打包UTF16，改为代UTF8-BOM
+	FFileHelper::SaveStringToFile(AllData, *(UpdatePakDirectory + TEXT("UpdateManifest.txt")), FFileHelper::EEncodingOptions::ForceUTF8);
 	FFileHelper::SaveStringToFile(FString::Printf(TEXT("%llu"), Hash),
 	                              *(UpdatePakDirectory + TEXT("UpdateManifestHash.txt")));
 }
@@ -32,15 +33,17 @@ void FUpdateManifest::SaveToLocal(const FString& UpdatePakDirectory)
 void FUpdateManifest::DeleteManifestFile(const FString& UpdatePakDirectory)
 {
 	IFileManager::Get().Delete(*(UpdatePakDirectory + TEXT("UpdateManifest.txt")));
+	IFileManager::Get().Delete(*(UpdatePakDirectory + TEXT("UpdateManifestHash.txt")));
 }
 
 FUpdateManifest FUpdateManifest::LoadFromLocal(const FString& UpdatePakDirectory)
 {
 	FUpdateManifest Manifest;
 
+	//校验Manifest文件是否完整，Pak文件由UE校验
 	uint64 UpdateManifestHash = 0;
 	FString HashStr;
-	if (FFileHelper::LoadFileToString(HashStr, *(FPaths::ProjectDir() + TEXT("UpdateManifestHash.txt"))))
+	if (FFileHelper::LoadFileToString(HashStr, *(UpdatePakDirectory + TEXT("UpdateManifestHash.txt"))))
 	{
 		UpdateManifestHash = FCString::Strtoui64(*HashStr, nullptr, 10);
 	}

@@ -7,6 +7,7 @@
 #include "SlateOptMacros.h"
 #include "GeneratePackage/GenerateProjectTool.h"
 #include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Layout/SBox.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -179,6 +180,7 @@ void SGeneratePackage::Construct(const FArguments& InArgs)
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			[
+				//TODO 改为支持一行多个元素的控件
 				SAssignNew(UpdateChunkScrollBox,SScrollBox)
 			]
 			//开始打包
@@ -332,22 +334,28 @@ FReply SGeneratePackage::OnSelectUpdatePackage()
 			FExportChunkInfo ChunkInfo = UHotUpdateEditorFunLib::GetChunkInfo(PrimaryData);
 			UpdateChunkScrollBox->AddSlot()
 			[
-				SNew(SCheckBox)
-				.OnCheckStateChanged_Lambda([this](ECheckBoxState InState,FExportChunkInfo ChunkInfo)
-				{
-					if(InState == ECheckBoxState::Checked)
-					{
-						UpdateChunk.AddUnique(ChunkInfo);
-					}
-					else if(InState == ECheckBoxState::Unchecked)
-					{
-						UpdateChunk.Remove(ChunkInfo);
-					}
-				},ChunkInfo)
+				SNew(SBox)
+				.WidthOverride(300)
+				.Padding(FMargin(5.0f,2.0f))
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(PrimaryData->ModuleName.ToString()))
+					SNew(SCheckBox)
+					.OnCheckStateChanged_Lambda([this](ECheckBoxState InState,FExportChunkInfo ChunkInfo)
+					{
+						if(InState == ECheckBoxState::Checked)
+						{
+							UpdateChunk.AddUnique(ChunkInfo);
+						}
+						else if(InState == ECheckBoxState::Unchecked)
+						{
+							UpdateChunk.Remove(ChunkInfo);
+						}
+					},ChunkInfo)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(PrimaryData->ModuleName.ToString()))
+					]
 				]
+				
 			];
 		}
 	}
