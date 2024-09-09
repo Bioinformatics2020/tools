@@ -6,11 +6,11 @@ public class HotUpdateEditorTool : ModuleRules
 {
 	public HotUpdateEditorTool(ReadOnlyTargetRules Target) : base(Target)
 	{
-		if(Target.Type != TargetType.Editor)
+		if (Target.Type != TargetType.Editor)
 		{
 			throw new BuildException("Unable to instantiate UnrealEd module for non-editor targets.");
 		}
-		
+
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicIncludePaths.AddRange(
@@ -58,7 +58,7 @@ public class HotUpdateEditorTool : ModuleRules
 				"DesktopPlatform",
 				"EDITORSTYLE",
 				"ENGINESETTINGS",
-				"TARGETPLATFORM", 
+				"TARGETPLATFORM",
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);
