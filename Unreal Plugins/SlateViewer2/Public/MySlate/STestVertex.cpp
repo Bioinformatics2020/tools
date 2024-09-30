@@ -28,7 +28,7 @@ void STestVertex::DrawCicle()
 void STestVertex::DrawCircularRing()
 {
 	//这里表示绘制圆环
-	int PointNum = 5;
+	int PointNum = 10;
 	for (int i = 0; i <= PointNum; ++i)
 	{
 		float Angle = (float)i / PointNum * 2 * PI;

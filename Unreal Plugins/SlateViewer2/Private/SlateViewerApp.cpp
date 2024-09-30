@@ -12,7 +12,10 @@
 #include "MySlate/STestVertex.h"
 #include "MySlate/SGames101_P0.h"
 #include "MySlate/STestLines.h"
+#include "MySlate/STestFractal.h"
 #include "ReadWriteFile/FReadWriteFileTest.h"
+#include "SlateViewer2/MySlate/SCellularAutomate.h"
+#include "Widgets/Images/SSpinningImage.h"
 
 
 IMPLEMENT_APPLICATION(SlateViewer, "SlateViewer");
@@ -55,7 +58,7 @@ int RunSlateViewer( const TCHAR* CommandLine )
 		FTicker::GetCoreTicker().Tick(FApp::GetDeltaTime());
 		FSlateApplication::Get().PumpMessages();
 		FSlateApplication::Get().Tick();		
-		FPlatformProcess::Sleep(0);
+		FPlatformProcess::Sleep(0.03);
 	}
 
 	FCoreDelegates::OnExit.Broadcast();
@@ -77,7 +80,7 @@ void MyRestoreSlateTestSuite()
 	TSharedRef<FTabManager::FLayout> Layout = FTabManager::NewLayout( "SlateTestSuite_Layout" )
 	->AddArea
 	(
-		FTabManager::NewArea(800, 600)
+		FTabManager::NewArea(800, 800)
 		->SetWindow( FVector2D(420, 10), false )
 		->Split
 		(
@@ -102,7 +105,7 @@ TSharedRef<SDockTab> MySDockTab1( const FSpawnTabArgs& Args )
 	RenderTransformManipulatorTab->SetContent
 	(
 	SNew(STestVertex)
-		.TestDrawShape(ETestDrawShape::Cicle)
+		.TestDrawShape(ETestDrawShape::CircularRing)
 	);
 
 	return RenderTransformManipulatorTab;
@@ -131,11 +134,13 @@ TSharedRef<SDockTab> MySDockTab3( const FSpawnTabArgs& Args )
 	TSharedRef<SDockTab> RenderTransformManipulatorTab =
 		SNew(SDockTab)
 		.TabRole(ETabRole::MajorTab)
-		.Label(FText::FromString(TEXT("STestLines")));
+		.Label(FText::FromString(TEXT("STestOther")));
 
 	RenderTransformManipulatorTab->SetContent
 	(
-	SNew(STestLines)
+		//SNew(STestLines)
+		//SNew(STestFractal)
+		SNew(SCellularAutomate)
 	);
 
 	return RenderTransformManipulatorTab;

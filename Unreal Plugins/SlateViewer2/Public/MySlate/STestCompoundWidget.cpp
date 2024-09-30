@@ -173,12 +173,12 @@ FReply STestCompoundWidget::OnMouseButtonDown(const FGeometry& MyGeometry, const
 			FVector2D NewPoint = CalBezierPoints(MyGeometry,SoftwareCursorPosition);
 			AddPoint(NewPoint);
 		}
-		
 		return FReply::Handled();
 	}
 	else if (MouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
 	{
 		RemoveLastPoint();
+		return FReply::Handled();
 	}
 	return FReply::Unhandled();
 }
@@ -193,13 +193,19 @@ FReply STestCompoundWidget::OnMouseMove(const FGeometry& MyGeometry, const FPoin
 			FVector2D SoftwareCursorPosition = MyGeometry.AbsoluteToLocal(MouseEvent.GetScreenSpacePosition());
 			FVector2D NewPoint = CalBezierPoints(MyGeometry,SoftwareCursorPosition + NearOffset);
 			FVector2D PointMove = NewPoint - BezierPoints[NearPoint];
-			if(NearPoint >= 1)
+
+			//希望1、4控制点的移动影响2、3控制点。
+			//例如：控制点4向左移动时，希望控制点3、5跟着向左移动
+			if(NearPoint % 3 == 0)
 			{
-				BezierPoints[NearPoint - 1] += PointMove;
-			}
-			if(NearPoint + 1 < BezierPoints.Num())
-			{
-				BezierPoints[NearPoint + 1] += PointMove;
+				if(NearPoint >= 1)
+				{
+					BezierPoints[NearPoint - 1] += PointMove;
+				}
+				if(NearPoint + 1 < BezierPoints.Num())
+				{
+					BezierPoints[NearPoint + 1] += PointMove;
+				}
 			}
 			BezierPoints[NearPoint] = NewPoint;
 		}
